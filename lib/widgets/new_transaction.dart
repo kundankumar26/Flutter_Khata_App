@@ -1,25 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-class NewTransaction extends StatelessWidget {
+class NewTransaction extends StatefulWidget {
   final Function addTx;
 
   NewTransaction(this.addTx);
 
-  //Input String for title and amount using onChanged method
-  // String titleInput;
-  // String amountInput;
+  @override
+  _NewTransactionState createState() => _NewTransactionState();
+}
 
-  final titleController = TextEditingController();
-  final amountController = TextEditingController();
+class _NewTransactionState extends State<NewTransaction> {
+  final _titleController = TextEditingController();                              //BEST USE TO TAKE INPUT FROM USER
+  final _amountController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
 
   void submitData(){
-    final enteredTitle = titleController.text;
-    final enteredAmount = double.parse(amountController.text);
-
-    if(enteredTitle.isEmpty || enteredAmount <= 0){
+    if(_amountController.text.isEmpty){
       return;
     }
-    addTx(enteredTitle, enteredAmount);
+    final enteredTitle = _titleController.text;
+    final enteredAmount = double.parse(_amountController.text);
+
+    if(enteredTitle.isEmpty || enteredAmount <= 0){                             //WHEN SUBMIT IS CALLED IF BOTH FIELD NOT EMPTY THEN SAVE ELSE EXIT
+      return;
+    }
+    widget.addTx(enteredTitle, enteredAmount, _selectedDate);
+    Navigator.of(context).pop();                                                //CLOSE THE FORM AFTER TAKING THE INPUT
+  }
+
+  //OPEN A DATE PICKER WINDOW TO SELECT DATE FROM, FIRSTDATE MEANS- DATE TILL 2020 ONLY AND NOT BEFORE THAT
+  //LASTDATE MEANS- CANNOT SELECT FUTURE DATES
+  void _datePicker() {
+    showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    ).then((pickedDate) {                                                       //IT GETS TRIGGERED WHEN A DATE IS SELECTED
+      if(pickedDate == null){
+        return;
+      }
+      setState(() {
+        _selectedDate = pickedDate;                                             //SETS THE CURRENT DATE TO SELECTED DATE
+      });
+    });
   }
 
   @override
@@ -31,21 +56,40 @@ class NewTransaction extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
             TextField(
-              decoration: InputDecoration(labelText: "Title"),
-              controller: titleController,
-              onSubmitted: (_) => submitData(),
+              decoration: InputDecoration(labelText: "Title"),                  //DISPLAY HINT OF TITLE
+              controller: _titleController,
+              onSubmitted: (_) => submitData(),                                 //AFTER TAKING INPUT IT WILL BE TRIGGERED
               //onChanged: (val) => titleInput = val,
             ),
             TextField(
               decoration: InputDecoration(labelText: "Amount"),
-              controller: amountController,
+              controller: _amountController,
               keyboardType: TextInputType.number,
-              onSubmitted: (_) => submitData(),
+              onSubmitted: (_) => submitData(),                                 //AFTER TAKING INPUT IT WILL BE TRIGGERED
               //onChanged: (val) => amountInput = val,
             ),
-            FlatButton(
-              child: Text("Add", style: TextStyle(color: Colors.blueAccent),),
-              onPressed: submitData,
+            Container(
+              height: 80,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text("Picked Date: ${DateFormat.yMd().format(_selectedDate)}"),
+                  ),
+                  FlatButton(
+                      onPressed: _datePicker,
+                      child: Text(
+                          "Choose Date",
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor,),
+                      ),
+                  )
+                ],
+              ),
+            ),
+            RaisedButton(
+              child: Text("Add Item", style: TextStyle(fontWeight: FontWeight.normal),),
+              color: Theme.of(context).primaryColor,
+              textColor: Colors.white,
+              onPressed: submitData,                                            //IT WILL BE TRIGGERED WHEN USER SUBMIT
             )
           ],
         ),
